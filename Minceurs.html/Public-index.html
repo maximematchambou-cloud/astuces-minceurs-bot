@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astuces Minceurs - Système Automatique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+        
+        .status {
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            background: #e7f3ff;
+            border-left: 5px solid #2196F3;
+        }
+        
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .article-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            transition: transform 0.3s;
+        }
+        
+        .article-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .article-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .article-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c5530;
+        }
+        
+        .article-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .published {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Astuces Minceurs Automatique</h1>
+            <p>Système de génération automatique d'articles sur la perte de poids</p>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="generateArticle()">
+                🚀 Générer un Article Maintenant
+            </button>
+            <button class="btn btn-secondary" onclick="loadArticles()">
+                📊 Voir les Articles
+            </button>
+            <button class="btn btn-secondary" onclick="checkStatus()">
+                🔍 Vérifier le Statut
+            </button>
+        </div>
+        
+        <div class="status" id="status">
+            💡 Système actif - Prochaine génération automatique dans 4 heures
+        </div>
+        
+        <div class="articles-grid" id="articlesGrid">
+            <div class="loading">Chargement des articles...</div>
+        </div>
+    </div>
+
+    <script>
+        // Charger les articles au démarrage
+        document.addEventListener('DOMContentLoaded', loadArticles);
+        
+        async function generateArticle() {
+            const status = document.getElementById('status');
+            status.innerHTML = '🔄 Génération en cours...';
+            
+            try {
+                const response = await fetch('/api/generate-article', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    status.innerHTML = `✅ Article généré: ${result.article}`;
+                    if (result.url) {
+                        status.innerHTML += ` <a href="${result.url}" target="_blank">Voir l'article</a>`;
+                    }
+                } else {
+                    status.innerHTML = `❌ Erreur: ${result.error}`;
+                }
+                
+                // Recharger la liste des articles
+                loadArticles();
+                
+            } catch (error) {
+                status.innerHTML = `❌ Erreur: ${error.message}`;
+            }
+        }
+        
+        async function loadArticles() {
+            const grid = document.getElementById('articlesGrid');
+            grid.innerHTML = '<div class="loading">Chargement des articles...</div>';
+            
+            try {
+                const response = await fetch('/api/articles');
+                const articles = await response.json();
+                
+                if (articles.length === 0) {
+                    grid.innerHTML = '<div class="loading">Aucun article généré pour le moment</div>';
+                    return;
+                }
+                
+                grid.innerHTML = articles.map(article => `
+                    <div class="article-card">
+                        ${article.imageUrl ? `<img src="${article.imageUrl}" alt="Article image" class="article-image">` : ''}
+                        <div class="article-title">${article.title}</div>
+                        <div class="article-meta">
+                            Créé: ${new Date(article.createdAt).toLocaleDateString('fr-FR')}<br>
+                            ${article.published ? `<span class="published">✅ Publié</span>` : '⏳ En attente'}
+                        </div>
+                        ${article.publishedUrl ? `<a href="${article.publishedUrl}" target="_blank" style="color: #4CAF50;">Voir l'article</a>` : ''}
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                grid.innerHTML = `<div class="loading">Erreur de chargement: ${error.message}</div>`;
+            }
+        }
+        
+        async function checkStatus() {
+            const status = document.getElementById('status');
+            status.innerHTML = '🔍 Vérification du statut...';
+            
+            try {
+                const response = await fetch('/api/articles');
+                const articles = await response.json();
+                
+                const publishedCount = articles.filter(a => a.published).length;
+                const pendingCount = articles.filter(a => !a.published).length;
+                
+                status.innerHTML = `
+                    📊 Statut du système:<br>
+                    ✅ Articles publiés: ${publishedCount}<br>
+                    ⏳ Articles en attente: ${pendingCount}<br>
+                    🕐 Prochaine génération automatique dans 4 heures
+                `;
+                
+            } catch (error) {
+                status.innerHTML = `❌ Erreur de statut: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
